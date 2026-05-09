@@ -4,6 +4,8 @@ import Feed from "@/components/Feed";
 import Footer from "@/components/Footer";
 import StickyMobileAd from "@/components/StickyMobileAd";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col relative pb-16 md:pb-0">
