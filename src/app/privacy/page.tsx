@@ -32,12 +32,15 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="mb-10 font-sans text-primary-foreground">
-          <h2 className="font-serif text-2xl mb-4 text-primary-foreground/90">3. Third-Party Links & Advertising</h2>
+          <h2 className="font-serif text-2xl mb-4 text-primary-foreground/90">3. Third-Party Links, Advertising & Affiliate Programs</h2>
           <p className="mb-4 leading-relaxed text-foreground/90">
             This website may include links to third-party websites, plug-ins and applications. Clicking on those links or enabling those connections may allow third parties to collect or share data about you. We do not control these third-party websites and are not responsible for their privacy statements.
           </p>
           <p className="mb-4 leading-relaxed text-foreground/90">
-            <strong>Google AdSense:</strong> We use Google AdSense Advertising on our website. Google, as a third-party vendor, uses cookies to serve ads on our site. Google's use of the DART cookie enables it to serve ads to our users based on previous visits to our site and other sites on the Internet.
+            <strong>Google AdSense:</strong> We use Google AdSense Advertising on our website. Google, as a third-party vendor, uses cookies to serve ads on our site. Google's use of the DART cookie enables it to serve ads to our users based on previous visits to our site and other sites on the Internet. Users may opt-out of the use of the DART cookie by visiting the Google Ad and Content Network privacy policy.
+          </p>
+          <p className="mb-4 leading-relaxed text-foreground/90">
+            <strong>Amazon Associates Program:</strong> Aesthetic Finds is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com. As an Amazon Associate, we earn from qualifying purchases. Amazon may use cookies to track your visits and assign commissions correctly.
           </p>
         </section>
 

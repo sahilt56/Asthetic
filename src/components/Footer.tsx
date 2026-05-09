@@ -7,9 +7,13 @@ export default function Footer() {
         <p className="font-sans text-xs md:text-sm text-muted-foreground text-center font-medium">
           © {new Date().getFullYear()} Aesthetic Finds. All rights reserved.
         </p>
-        <div className="flex gap-4 md:gap-6 text-xs md:text-sm text-muted-foreground/80 font-medium">
+        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm text-muted-foreground/80 font-medium">
           <Link href="/privacy" className="hover:text-primary-foreground transition-colors">Privacy Policy</Link>
-          <span>•</span>
+          <span className="hidden md:inline">•</span>
+          <Link href="/terms" className="hover:text-primary-foreground transition-colors">Terms & Conditions</Link>
+          <span className="hidden md:inline">•</span>
+          <Link href="/contact" className="hover:text-primary-foreground transition-colors">Contact Us</Link>
+          <span className="hidden md:inline">•</span>
           <Link href="/affiliate" className="hover:text-primary-foreground transition-colors">Affiliate Disclosure</Link>
         </div>
         <p className="text-[10px] md:text-xs text-muted-foreground/60 text-center max-w-2xl mt-1 md:mt-2 leading-relaxed">
