@@ -76,13 +76,18 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* Google AdSense */}
-        <Script 
-          async 
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3881909791011190" 
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
+        {/* Google AdSense Dynamic Injection */}
+        <Script id="adsense-init" strategy="afterInteractive">
+          {`
+            (function() {
+              var script = document.createElement('script');
+              script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3881909791011190';
+              script.async = true;
+              script.crossOrigin = 'anonymous';
+              document.head.appendChild(script);
+            })();
+          `}
+        </Script>
         
         {/* JSON-LD Search Engine Structured Data */}
         <Script
