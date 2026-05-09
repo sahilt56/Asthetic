@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Aesthetic Finds ✨ | Curated Coquette Treasures & Cute Decor",
+  title: "Aesthetic Finds ✨ | Curated Coquette Treasures (Official Site of Content Hub)",
   description: "Discover a premium, hand-picked collection of coquette style treasures, cute room decor, and aesthetic finds. Shop the best curated lifestyle products.",
   keywords: ["coquette aesthetic", "cute decor", "aesthetic finds", "curated gallery", "premium lifestyle", "pinterest style", "kawaii fashion"],
   authors: [{ name: "Aesthetic Finds" }],
