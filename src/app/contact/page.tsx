@@ -22,7 +22,7 @@ export default function ContactUs() {
           <div className="mt-8 bg-muted/30 border border-primary/20 p-6 rounded-lg">
             <h3 className="font-serif text-xl mb-3 text-primary-foreground/90">Email Us</h3>
             <p className="mb-2 text-foreground/90">For general inquiries, support, or partnership opportunities:</p>
-            <a href="mailto:contact@aestheticfinds.com" className="text-primary hover:underline font-medium">contact@aestheticfinds.com</a>
+            <a href="mailto:vartalapsupport@gmail.com" className="text-rose-500 hover:text-rose-600 hover:underline transition-colors font-medium">vartalapsupport@gmail.com</a>
           </div>
         </section>
 

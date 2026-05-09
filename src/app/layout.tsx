@@ -75,20 +75,24 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
-      <head>
-        {/* Google AdSense Placeholder - Replace ca-pub-XXXX with your actual publisher ID */}
-        <script 
+      <body className="min-h-full flex flex-col">
+        {/* Google AdSense */}
+        <Script 
           async 
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3881909791011190" 
           crossOrigin="anonymous"
-        ></script>
+          strategy="afterInteractive"
+        />
         
-        <script
+        {/* JSON-LD Search Engine Structured Data */}
+        <Script
+          id="json-ld"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+        {children}
+      </body>
     </html>
   );
 }
