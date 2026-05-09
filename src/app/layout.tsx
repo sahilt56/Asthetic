@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from 'next/script';
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
@@ -75,6 +76,13 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <head>
+        {/* Google AdSense Placeholder - Replace ca-pub-XXXX with your actual publisher ID */}
+        <script 
+          async 
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3881909791011190" 
+          crossOrigin="anonymous"
+        ></script>
+        
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
