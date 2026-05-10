@@ -31,6 +31,45 @@ export default function AdminDashboard() {
   const [imageBase64, setImageBase64] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  
+  // Settings State
+  const [mascotUrl, setMascotUrl] = useState('');
+  const [savingMascot, setSavingMascot] = useState(false);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      if (data.mascotImageUrl) {
+        setMascotUrl(data.mascotImageUrl);
+      } else {
+        setMascotUrl('/kitty.gif'); // default
+      }
+    } catch (e) {
+      console.error('Failed to load settings');
+    }
+  };
+
+  const handleSaveMascot = async () => {
+    setSavingMascot(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'mascotImageUrl', value: mascotUrl })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Mascot updated successfully!');
+      } else {
+        alert('Failed to save mascot.');
+      }
+    } catch (e) {
+      alert('Network error saving mascot.');
+    } finally {
+      setSavingMascot(false);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -47,6 +86,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchProducts();
+      fetchSettings();
     }
   }, [isAuthenticated]);
 
@@ -218,6 +258,36 @@ export default function AdminDashboard() {
           <h1 className="font-serif text-2xl md:text-3xl text-foreground font-bold">Admin Dashboard ✨</h1>
           <button onClick={() => setIsAuthenticated(false)} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 rounded-lg border border-transparent hover:border-muted">Logout</button>
         </header>
+
+        {/* GLOBAL SETTINGS BAR */}
+        <section className="bg-white p-6 rounded-3xl shadow-sm border border-primary/15 flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center border border-muted overflow-hidden shrink-0">
+               {/* eslint-disable-next-line @next/next/no-img-element */}
+               <img src={mascotUrl || '/kitty.gif'} alt="Mascot Preview" className="w-12 h-12 object-contain" />
+            </div>
+            <div>
+              <h3 className="font-sans font-bold text-[#3E322C]">Site Mascot Image</h3>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">Paste a direct URL of a new GIF to change the character roaming the site.</p>
+            </div>
+          </div>
+          <div className="flex flex-1 gap-2 w-full">
+            <input 
+              type="url" 
+              value={mascotUrl} 
+              onChange={(e) => setMascotUrl(e.target.value)}
+              placeholder="https://example.com/cool-cat.gif"
+              className="flex-1 px-4 py-3 rounded-xl bg-muted/10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            />
+            <button 
+              onClick={handleSaveMascot}
+              disabled={savingMascot}
+              className="px-6 py-3 bg-[#E60023] hover:bg-[#bd081c] text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            >
+              {savingMascot ? 'Saving...' : 'Save Mascot'}
+            </button>
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Combined Action Form */}

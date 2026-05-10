@@ -54,11 +54,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import connectToDatabase from "@/lib/mongodb";
+import { Settings } from "@/models/Settings";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let mascotUrl = '/kitty.gif';
+  try {
+    await connectToDatabase();
+    const setting = await Settings.findOne({ key: 'mascotImageUrl' }).lean();
+    if (setting && setting.value) {
+      mascotUrl = setting.value;
+    }
+  } catch (e) {
+    console.error("Could not load mascot setting:", e);
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -101,19 +115,29 @@ export default function RootLayout({
         {/* Decorative Animated Background Orbs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 select-none">
           {/* Richer Glow Top Right */}
-          <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#FFE4E6] blur-[120px] opacity-85 animate-float-1" />
+          <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#FFE4E6] blur-[80px] md:blur-[120px] opacity-60 md:opacity-85 md:animate-float-1" />
           
           {/* Stronger Lavender Left Center */}
-          <div className="absolute top-[25%] left-[-15%] w-[50vw] h-[50vw] rounded-full bg-[#EDE9FE] blur-[140px] opacity-75 animate-float-2" />
+          <div className="absolute top-[25%] left-[-15%] w-[50vw] h-[50vw] rounded-full bg-[#EDE9FE] blur-[90px] md:blur-[140px] opacity-50 md:opacity-75 md:animate-float-2" />
           
           {/* Richer Peach Bottom Right */}
-          <div className="absolute bottom-[-15%] right-[10%] w-[55vw] h-[55vw] rounded-full bg-[#FFEDD5] blur-[120px] opacity-90 animate-float-3" />
+          <div className="absolute bottom-[-15%] right-[10%] w-[55vw] h-[55vw] rounded-full bg-[#FFEDD5] blur-[80px] md:blur-[120px] opacity-60 md:opacity-90 md:animate-float-3" />
           
-          {/* Added soft accent mid-center */}
-          <div className="absolute top-[50%] left-[30%] w-[30vw] h-[30vw] rounded-full bg-[#FAE8FF] blur-[100px] opacity-60 animate-float-1" />
+          {/* Added soft accent mid-center (Desktop Only for Perf) */}
+          <div className="hidden md:block absolute top-[50%] left-[30%] w-[30vw] h-[30vw] rounded-full bg-[#FAE8FF] blur-[100px] opacity-60 animate-float-1" />
 
-          {/* Subtle Texture Overlay */}
-          <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-multiply" />
+          {/* Subtle Texture Overlay - ENABLED ONLY ON DESKTOP for intense scrolling perf */}
+          <div className="hidden md:block absolute inset-0 bg-grain opacity-[0.03] mix-blend-multiply" />
+        </div>
+
+        {/* Aesthetic Walking Kitty mascot (Universal Version) */}
+        <div className="fixed bottom-0 left-0 w-full pointer-events-none z-[100] overflow-hidden h-24 md:h-32 select-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={mascotUrl} 
+            alt="walking mascot"
+            className="absolute bottom-[-22px] md:bottom-[-31px] h-24 md:h-32 w-auto object-contain animate-walk opacity-80 hover:opacity-100 transition-opacity pointer-events-none" 
+          />
         </div>
 
         {/* Floating Mobile Action Button (Moved Outside Header to bypass containment) */}

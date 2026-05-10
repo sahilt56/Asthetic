@@ -55,4 +55,27 @@ body {
   .bg-grain {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
+  
+  @keyframes walk-cycle {
+    /* 1. START: Right se shuru, GIF already Left dekh raha hai (scaleX 1) */
+    0% { transform: translateX(100vw) scaleX(1); } 
+
+    /* 2. ARRIVE LEFT: Left tak pahunch gaya, munh abhi bhi Left hai */
+    48% { transform: translateX(-100px) scaleX(1); } 
+
+    /* 3. FLIP: Usi jagah khade hoke Right side munh kiya (scaleX -1) */
+    48.01% { transform: translateX(-100px) scaleX(-1); } 
+
+    /* 4. RETURN RIGHT: Right side wapas gaya, munh Right ki taraf hai */
+    98% { transform: translateX(100vw) scaleX(-1); } 
+
+    /* 5. RESET: Agle round ke liye wapas Left face kar liya */
+    100% { transform: translateX(100vw) scaleX(1); }
+}
+
+.animate-walk {
+    animation: walk-cycle 200s linear infinite;
+}
+
+  
 }

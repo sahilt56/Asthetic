@@ -16,6 +16,7 @@ export interface Product {
 
 export default function ProductCard({ product, priority = false }: { product: Product, priority?: boolean }) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   const handleFlip = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -27,7 +28,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
       <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] [will-change:transform] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
         {/* ==================== FRONT OF CARD ==================== */}
-        <div className={`group [backface-visibility:hidden] relative flex flex-col sm:flex-row bg-[#FFFBF9] rounded-[2rem] sm:rounded-[2.5rem] p-3 sm:p-5 md:p-6 shadow-[0_12px_30px_-15px_rgba(222,155,155,0.15)] border border-[#FEF2F2] gap-3 sm:gap-6 md:gap-8 transition-shadow duration-300 w-full overflow-hidden ${isFlipped ? 'pointer-events-none' : 'z-10'}`}>
+        <div className={`group [backface-visibility:hidden] relative flex flex-col sm:flex-row bg-[#FFFBF9] rounded-[2rem] sm:rounded-[2.5rem] p-3 sm:p-5 md:p-6 shadow-sm sm:shadow-[0_12px_30px_-15px_rgba(222,155,155,0.15)] border border-[#FEF2F2] gap-3 sm:gap-6 md:gap-8 transition-shadow duration-300 w-full overflow-hidden ${isFlipped ? 'pointer-events-none' : 'z-10'}`}>
           {/* Gradient Background Accent Subtle */}
           <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#FFF5F5] opacity-40 pointer-events-none" />
 
@@ -62,9 +63,20 @@ export default function ProductCard({ product, priority = false }: { product: Pr
               {/* <div className="text-[#E59595] text-xs mb-2 sm:mb-3 opacity-80">❤</div> */}
               
               {/* Description */}
-              <p className="text-[#585959] text-[12px] sm:text-[13px] lg:text-[14px] leading-relaxed font-medium mb-3 sm:mb-4 max-w-[95%] line-clamp-2 lg:line-clamp-none">
-                {product.description || 'Perfect aesthetic addition to cozy up your personal space and set the mood.'}
-              </p>
+              <div>
+                <p className={`text-[#585959] text-[12px] sm:text-[13px] lg:text-[14px] leading-relaxed font-medium max-w-[95%] ${isDescExpanded ? '' : 'line-clamp-2 lg:line-clamp-3'}`}>
+                  {product.description || 'Perfect aesthetic addition to cozy up your personal space and set the mood.'}
+                </p>
+                {(product.description && product.description.length > 90) && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsDescExpanded(!isDescExpanded); }} 
+                    className="text-[#e32bac] text-xs font-bold hover:underline mt-1 inline-block"
+                  >
+                    {isDescExpanded ? 'Read Less' : '... Read More'}
+                  </button>
+                )}
+              </div>
+              <div className="h-2"></div> {/* spacing filler */}
 
               {/* Price Replacement Section */}
               <div className="flex items-center gap-2 mb-3 sm:mb-5 py-0.5 sm:py-1">

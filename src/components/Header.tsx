@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Header() {
   return (
-    <header className="w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between bg-background/90 backdrop-blur-md border-b border-primary/20 sticky top-0 z-50 gap-4">
+    <header className="w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between bg-background md:bg-background/90 md:backdrop-blur-md border-b border-primary/20 sticky top-0 z-50 gap-4">
       {/* Spacer for desktop centering of title */}
       <div className="hidden md:block w-[200px]"></div>
       
