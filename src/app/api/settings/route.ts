@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const updated = await Settings.findOneAndUpdate(
       { key },
       { value },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     return NextResponse.json({ success: true, updated });
   } catch (error) {

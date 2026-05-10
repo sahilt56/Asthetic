@@ -1,19 +1,93 @@
+import connectToDatabase from '@/lib/mongodb';
+import { Settings } from '@/models/Settings';
+import { Notice } from '@/models/Notice';
+import DynamicHeaderContent from './DynamicHeaderContent';
 import Link from 'next/link';
 
-export default function Header() {
-  return (
-    <header className="w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between bg-background md:bg-background/90 md:backdrop-blur-md border-b border-primary/20 sticky top-0 z-50 gap-4">
-      {/* Spacer for desktop centering of title */}
-      <div className="hidden md:block w-[200px]"></div>
-      
-      <div className="flex flex-col items-center text-center">
-        <h1 className="font-serif text-2xl md:text-4xl text-primary-foreground font-bold tracking-wide flex items-center gap-2 justify-center">
-          Aesthetic Finds ✨
-        </h1>
-        <p className="font-sans text-[11px] sm:text-md md:text-sm text-muted-foreground mt-1 md:mt-1.5 max-w-auto">
-          Curated coquette treasures, cute decor, and premium finds, just for you.
-        </p>
-      </div>
+export default async function Header() {
+  let title = 'Aesthetic Finds ✨';
+  let rawTaglines = 'Curated coquette treasures, cute decor, and premium finds, just for you.';
+  let notices: any[] = [];
+  let headerTheme = 'glass';
+  let headerTitleColor = '';
+  let headerTitleFont = 'font-serif';
+  let headerSubtitleColor = '';
+  let headerSubtitleFont = 'font-sans';
+
+  try {
+    await connectToDatabase();
+    const settings = await Settings.find({
+      key: { $in: [
+        'headerTitle', 
+        'headerTaglines',
+        'headerTheme',
+        'headerTitleColor',
+        'headerTitleFont',
+        'headerSubtitleColor',
+        'headerSubtitleFont'
+      ] }
+    }).lean();
+    
+    const settingsMap = settings.reduce((acc: any, s: any) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+
+    if (settingsMap.headerTitle) title = settingsMap.headerTitle;
+    if (settingsMap.headerTaglines) rawTaglines = settingsMap.headerTaglines;
+    
+    // Extract Aesthetic Values
+    if (settingsMap.headerTheme) headerTheme = settingsMap.headerTheme;
+    if (settingsMap.headerTitleColor) headerTitleColor = settingsMap.headerTitleColor;
+    if (settingsMap.headerTitleFont) headerTitleFont = settingsMap.headerTitleFont;
+    if (settingsMap.headerSubtitleColor) headerSubtitleColor = settingsMap.headerSubtitleColor;
+    if (settingsMap.headerSubtitleFont) headerSubtitleFont = settingsMap.headerSubtitleFont;
+
+    // Fetch Advanced Notices
+    const dbNotices = await Notice.find({}).lean();
+    notices = dbNotices.map((n: any) => ({
+      id: n._id.toString(),
+      text: n.text,
+      intervalSeconds: n.intervalSeconds,
+      durationSeconds: n.durationSeconds,
+      link: n.link || '',
+      imageUrl: n.imageUrl || '',
+      type: n.type || 'notice',
+      mediaType: n.mediaType || 'image'
+    }));
+  } catch (e) {
+    console.error("Failed fetching Header settings/notices", e);
+  }
+
+  // DEFINE THEME MAP
+  const themeStyles: Record<string, string> = {
+    'glass': 'bg-background/90 backdrop-blur-md border-b border-primary/20 text-foreground',
+    'minimal': 'bg-white border-b border-gray-100 shadow-sm text-gray-800',
+    'soft-blush': 'bg-[#FFF5F5] border-b border-[#FECACA] shadow-sm text-[#831843]',
+    'dark-luxury': 'bg-[#0f0f0f] border-b border-[#2a2a2a] text-neutral-100 shadow-xl',
+    'sunset-gradient': 'bg-gradient-to-r from-[#FFF1F2] via-[#FFEDD5] to-[#FEF2F2] border-b border-[#FDBA74] text-orange-950'
+  };
+
+  const currentThemeClass = themeStyles[headerTheme] || themeStyles['glass'];
+
+  // Parse multiple lines into individual phrases
+  const phrases = rawTaglines.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+
+    return (
+      <header className={`w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between sticky top-0 z-50 gap-4 relative transition-all duration-500 ${currentThemeClass}`}>
+        {/* Spacer for desktop centering of title */}
+        <div className="hidden md:block w-[200px]"></div>
+        
+        <DynamicHeaderContent 
+          title={title}
+          phrases={phrases}
+          notices={notices}
+          // Forward aesthetic props
+          titleColor={headerTitleColor}
+          titleFont={headerTitleFont}
+          subtitleColor={headerSubtitleColor}
+          subtitleFont={headerSubtitleFont}
+        />
 
       <Link 
         href="https://in.pinterest.com/sahil620476" // Replace 'contenthub' with your exact username if different

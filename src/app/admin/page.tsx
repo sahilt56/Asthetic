@@ -35,18 +35,191 @@ export default function AdminDashboard() {
   // Settings State
   const [mascotUrl, setMascotUrl] = useState('');
   const [savingMascot, setSavingMascot] = useState(false);
+  
+  const [headerTitle, setHeaderTitle] = useState('');
+  const [headerTaglines, setHeaderTaglines] = useState('');
+  const [headerNotice, setHeaderNotice] = useState('');
+  const [headerNoticeInterval, setHeaderNoticeInterval] = useState('5'); // Default 5 min
+  const [savingHeader, setSavingHeader] = useState(false);
+  
+  // AESTHETIC CUSTOMIZATION STATES
+  const [headerTheme, setHeaderTheme] = useState('glass');
+  const [headerTitleColor, setHeaderTitleColor] = useState('');
+  const [headerTitleFont, setHeaderTitleFont] = useState('font-serif');
+  const [headerSubtitleColor, setHeaderSubtitleColor] = useState('');
+  const [headerSubtitleFont, setHeaderSubtitleFont] = useState('font-sans');
+
+  // MULTI-NOTICE MANAGEMENT SYSTEM
+  const [notices, setNotices] = useState<any[]>([]);
+  const [nText, setNText] = useState('');
+  const [nIntervalMin, setNIntervalMin] = useState('0');
+  const [nIntervalSec, setNIntervalSec] = useState('30');
+  const [nDurationSec, setNDurationSec] = useState('10');
+  const [nLink, setNLink] = useState('');
+  const [nImageUrl, setNImageUrl] = useState('');
+  const [nMediaType, setNMediaType] = useState('image'); // 'image' | 'video'
+  const [nType, setNType] = useState('notice'); // 'notice' | 'billboard'
+  const [savingNotice, setSavingNotice] = useState(false);
+  const [uploadingNoticeFile, setUploadingNoticeFile] = useState(false);
+
+  // Handle direct file uploads for Notice Media
+  const handleNoticeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Size check 5MB approx
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File must be under 5MB");
+      return;
+    }
+
+    setUploadingNoticeFile(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileBase64: base64, password: password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setNImageUrl(data.secure_url);
+          setNMediaType(data.mediaType); // Sets 'image' or 'video' automatically!
+        } else { alert("Upload failed."); }
+      } catch (err) { alert("Connection error."); }
+      setUploadingNoticeFile(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const fetchNotices = async () => {
+    try {
+      const res = await fetch('/api/notices', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success) setNotices(data.data);
+    } catch (e) { console.error("Failed fetch notices"); }
+  };
+
+  const handleAddNotice = async () => {
+    // If billboard, allow empty text as long as media exists. If notice, require text.
+    if (nType === 'notice' && !nText) return alert("Please enter notice text.");
+    if (nType === 'billboard' && !nText && !nImageUrl) return alert("Billboard requires text OR media upload!");
+    
+    setSavingNotice(true);
+    const totalSec = (parseInt(nIntervalMin) * 60) + parseInt(nIntervalSec);
+    try {
+      const res = await fetch('/api/notices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: nText, 
+          intervalSeconds: totalSec > 0 ? totalSec : 60, 
+          durationSeconds: parseInt(nDurationSec) || 10,
+          link: nLink,
+          imageUrl: nImageUrl,
+          type: nType,
+          mediaType: nMediaType
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNText('');
+        setNLink('');
+        setNImageUrl('');
+        setNMediaType('image');
+        setNType('notice');
+        fetchNotices();
+      } else {
+        alert("Server Error: " + (data.error || "Failed to add item"));
+      }
+    } catch (e) { 
+      alert("Failed to connect to server"); 
+    } finally {
+      setSavingNotice(false);
+    }
+  };
+
+  const handleDeleteNotice = async (id: string) => {
+    if(!confirm("Delete this notice?")) return;
+    try {
+      await fetch('/api/notices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      fetchNotices();
+    } catch (e) { alert("Failed deleting"); }
+  };
 
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
-      if (data.mascotImageUrl) {
-        setMascotUrl(data.mascotImageUrl);
-      } else {
-        setMascotUrl('/kitty.gif'); // default
-      }
+      setMascotUrl(data.mascotImageUrl || '/kitty.gif');
+      setHeaderTitle(data.headerTitle || 'Aesthetic Finds ✨');
+      setHeaderTaglines(data.headerTaglines || 'Curated coquette treasures, cute decor, and premium finds, just for you.');
+      setHeaderNotice(data.headerNotice || '');
+      setHeaderNoticeInterval(data.headerNoticeInterval || '5');
+      
+      // Load aesthetic configs
+      setHeaderTheme(data.headerTheme || 'glass');
+      setHeaderTitleColor(data.headerTitleColor || '');
+      setHeaderTitleFont(data.headerTitleFont || 'font-serif');
+      setHeaderSubtitleColor(data.headerSubtitleColor || '');
+      setHeaderSubtitleFont(data.headerSubtitleFont || 'font-sans');
     } catch (e) {
       console.error('Failed to load settings');
+    }
+  };
+
+  const handleSaveHeader = async () => {
+    setSavingHeader(true);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'headerTitle', value: headerTitle })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'headerTaglines', value: headerTaglines })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'headerNotice', value: headerNotice })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'headerNoticeInterval', value: headerNoticeInterval })
+      });
+
+      // Aesthetic keys saving
+      const configs = [
+        { key: 'headerTheme', value: headerTheme },
+        { key: 'headerTitleColor', value: headerTitleColor },
+        { key: 'headerTitleFont', value: headerTitleFont },
+        { key: 'headerSubtitleColor', value: headerSubtitleColor },
+        { key: 'headerSubtitleFont', value: headerSubtitleFont }
+      ];
+      
+      for (const config of configs) {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+      }
+
+      alert('Header settings updated successfully!');
+    } catch (e) {
+      alert('Error saving header settings.');
+    } finally {
+      setSavingHeader(false);
     }
   };
 
@@ -87,6 +260,7 @@ export default function AdminDashboard() {
     if (isAuthenticated) {
       fetchProducts();
       fetchSettings();
+      fetchNotices();
     }
   }, [isAuthenticated]);
 
@@ -285,6 +459,235 @@ export default function AdminDashboard() {
               className="px-6 py-3 bg-[#E60023] hover:bg-[#bd081c] text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 shadow-sm"
             >
               {savingMascot ? 'Saving...' : 'Save Mascot'}
+            </button>
+          </div>
+        </section>
+
+        {/* HEADER SETTINGS BAR */}
+        <section className="bg-white p-6 rounded-3xl shadow-sm border border-primary/15 flex flex-col gap-4">
+          <div className="border-b border-muted pb-3 mb-1">
+            <h3 className="font-serif text-xl font-bold text-[#3E322C] flex items-center gap-2">
+              Customizable Dynamic Header 🎭
+            </h3>
+            <p className="text-xs text-muted-foreground">Customize site name and add multiple cycling taglines (put each tagline on a new line).</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-[#8C7A74] uppercase tracking-wider">Main Site Title</label>
+              <input 
+                type="text"
+                value={headerTitle}
+                onChange={(e) => setHeaderTitle(e.target.value)}
+                placeholder="Aesthetic Finds ✨"
+                className="px-4 py-3 rounded-xl bg-muted/10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-[#8C7A74] uppercase tracking-wider">Rotating Taglines (One per line)</label>
+              <textarea 
+                rows={3}
+                value={headerTaglines}
+                onChange={(e) => setHeaderTaglines(e.target.value)}
+                placeholder="Line 1&#10;Line 2&#10;Line 3"
+                className="px-4 py-3 rounded-xl bg-muted/10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary text-sm min-h-[80px]"
+              />
+            </div>
+          </div>
+
+          {/* AESTHETIC CUSTOMIZATION PANEL */}
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-muted/50">
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-bold text-[#8C7A74] uppercase flex items-center gap-1">
+                Header Theme Look
+              </label>
+              <select 
+                value={headerTheme} 
+                onChange={(e) => setHeaderTheme(e.target.value)}
+                className="px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm font-medium focus:ring-2 focus:ring-pink-300 focus:outline-none"
+              >
+                <option value="glass">✨ Modern Glassmorphism</option>
+                <option value="minimal">🤍 Clean White Minimalist</option>
+                <option value="soft-blush">🌸 Cute Soft Blush Pink</option>
+                <option value="dark-luxury">🖤 Dark Luxury Gold</option>
+                <option value="sunset-gradient">🌇 Aesthetic Sunset Gradient</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2 border-l border-muted/30 pl-0 md:pl-4">
+              <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Title Styling</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <select 
+                    value={headerTitleFont} 
+                    onChange={(e) => setHeaderTitleFont(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm focus:ring-2 focus:ring-pink-300 focus:outline-none"
+                  >
+                    <option value="font-serif">Serif (Elegant)</option>
+                    <option value="font-sans">Sans (Modern)</option>
+                    <option value="font-mono">Monospace (Cute)</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 bg-muted/5 border border-muted rounded-xl px-2 py-1">
+                   <input 
+                     type="color" 
+                     value={headerTitleColor || '#000000'} 
+                     onChange={(e) => setHeaderTitleColor(e.target.value)} 
+                     className="w-7 h-7 border-0 cursor-pointer bg-transparent"
+                   />
+                   <span className="text-[10px] font-mono text-muted-foreground">Color</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 border-l border-muted/30 pl-0 md:pl-4">
+              <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Subtitle Styling</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <select 
+                    value={headerSubtitleFont} 
+                    onChange={(e) => setHeaderSubtitleFont(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm focus:ring-2 focus:ring-pink-300 focus:outline-none"
+                  >
+                    <option value="font-sans">Sans (Clear)</option>
+                    <option value="font-serif">Serif (Classic)</option>
+                    <option value="font-mono">Monospace</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 bg-muted/5 border border-muted rounded-xl px-2 py-1">
+                   <input 
+                     type="color" 
+                     value={headerSubtitleColor || '#6B7280'} 
+                     onChange={(e) => setHeaderSubtitleColor(e.target.value)} 
+                     className="w-7 h-7 border-0 cursor-pointer bg-transparent"
+                   />
+                   <span className="text-[10px] font-mono text-muted-foreground">Color</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Notice Board System v2 */}
+          <div className="mt-4 p-5 bg-[#FEF2F2] border border-[#FECACA] rounded-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="bg-[#E60023] text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-sm">Master Notice Suite</span>
+              <h4 className="font-sans font-bold text-[#3E322C] text-base">Notice Broadcast Center</h4>
+            </div>
+
+            {/* CREATE FORM */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-white p-4 rounded-xl border border-[#FECACA]/50 shadow-sm mb-4">
+              <div className="md:col-span-4">
+                <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Display Type</label>
+                <select 
+                  value={nType}
+                  onChange={(e) => setNType(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-[#E60023]/50 text-sm font-bold text-[#E60023]"
+                >
+                  <option value="notice">💎 Central Notice (Subtle)</option>
+                  <option value="billboard">🔥 Billboard (Full Header Cover)</option>
+                </select>
+              </div>
+
+              {nType === 'notice' && (
+                <div className="md:col-span-4 transition-all duration-300">
+                  <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Special Notice Message</label>
+                  <textarea 
+                    value={nText}
+                    onChange={(e) => setNText(e.target.value)}
+                    placeholder="🔥 E.g., 50% Off Flash Sale!"
+                    className="w-full px-3 py-2.5 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-[#E60023]/50 text-sm min-h-[60px]"
+                  />
+                </div>
+              )}
+
+              {nType === 'billboard' && (
+                <div className="md:col-span-4 transition-all duration-300">
+                  <div className="flex flex-col gap-2">
+                     <div>
+                       <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Target Promo URL (Optional)</label>
+                       <input type="url" value={nLink} onChange={(e) => setNLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2 rounded-lg border border-muted text-sm" />
+                     </div>
+                     <div>
+                       <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Upload Media (Video & Image Supported)</label>
+                       <div className="flex items-center gap-2">
+                          <label className={`flex-1 flex flex-col items-center justify-center px-3 py-2 bg-white text-pink-500 rounded-lg shadow-sm tracking-wide uppercase border border-pink-200 cursor-pointer hover:bg-pink-50 transition-all text-[10px] font-bold ${uploadingNoticeFile ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <svg className="w-4 h-4 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" /></svg>
+                              <span className="truncate w-full text-center">{uploadingNoticeFile ? "Uploading..." : (nImageUrl ? "✓ Media Uploaded" : "Attach File (Max 5MB)")}</span>
+                              <input type='file' className="hidden" onChange={handleNoticeFileUpload} accept="image/*,video/*" />
+                          </label>
+                          {nImageUrl && (
+                            <span className="bg-green-100 text-green-600 text-[9px] px-1 rounded uppercase font-bold">{nMediaType}</span>
+                          )}
+                       </div>
+                     </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="md:col-span-4 flex flex-col justify-between h-full">
+                 <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Interval M</label>
+                      <input type="number" min="0" value={nIntervalMin} onChange={(e) => setNIntervalMin(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Interval S</label>
+                      <input type="number" min="0" max="59" value={nIntervalSec} onChange={(e) => setNIntervalSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block truncate">Dur (Sec)</label>
+                      <input type="number" min="1" value={nDurationSec} onChange={(e) => setNDurationSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                    </div>
+                 </div>
+                 <button 
+                    onClick={handleAddNotice}
+                    disabled={savingNotice}
+                    className="w-full py-3 bg-[#E60023] text-white rounded-lg font-bold text-sm hover:bg-[#C4001D] transition-colors shadow-md flex items-center justify-center leading-tight"
+                 >
+                    {savingNotice ? '...' : '+ Create Item'}
+                 </button>
+              </div>
+
+            </div>
+
+            {/* LIST DISPLAY */}
+            <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
+              {notices.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-3 italic">No active dynamic notices yet.</p>
+              ) : notices.map((item) => (
+                <div key={item._id} className="flex justify-between items-center bg-white px-3 py-2.5 rounded-xl border border-muted shadow-sm group">
+                  <div className="flex flex-col gap-0.5 overflow-hidden">
+                    <p className={`font-bold text-sm truncate max-w-[250px] md:max-w-full ${item.text ? 'text-[#E60023]' : 'text-gray-400 italic'}`}>
+                      {item.text || "🖼️ [Visual Media Only]"}
+                    </p>
+                    <div className="flex gap-2.5 text-[10px] font-bold text-[#8C7A74] items-center mt-0.5">
+                       <span className={`px-1.5 py-0.5 rounded ${item.type === 'billboard' ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-gray-100 text-gray-600'}`}>
+                         {item.type === 'billboard' ? '👑 Billboard' : '📢 Notice'}
+                       </span>
+                       <span>⏰ Every: {item.intervalSeconds}s</span>
+                       <span>⏱ Show: {item.durationSeconds}s</span>
+                       {item.link && <span className="text-blue-500">🔗 Link</span>}
+                       {item.imageUrl && (
+                         <span className="bg-purple-100 text-purple-600 px-1 rounded uppercase text-[9px]">
+                           {item.mediaType === 'video' ? '🎥 Video' : '🖼 Img'}
+                         </span>
+                       )}
+                    </div>
+                  </div>
+                  <button onClick={() => handleDeleteNotice(item._id)} className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all ml-2 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-2">
+            <button 
+              onClick={handleSaveHeader}
+              disabled={savingHeader}
+              className="px-8 py-3 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:opacity-90 shadow-sm transition-all disabled:opacity-50"
+            >
+              {savingHeader ? 'Updating Header...' : 'Save Header Configuration'}
             </button>
           </div>
         </section>
