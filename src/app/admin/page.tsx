@@ -61,6 +61,33 @@ export default function AdminDashboard() {
   const [nType, setNType] = useState('notice'); // 'notice' | 'billboard'
   const [savingNotice, setSavingNotice] = useState(false);
   const [uploadingNoticeFile, setUploadingNoticeFile] = useState(false);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
+
+  const resetNoticeForm = () => {
+    setEditingNoticeId(null);
+    setNText('');
+    setNLink('');
+    setNImageUrl('');
+    setNMediaType('image');
+    setNType('notice');
+    setNIntervalMin('0');
+    setNIntervalSec('30');
+    setNDurationSec('10');
+  };
+
+  const handleEditNotice = (item: any) => {
+    setEditingNoticeId(item._id);
+    setNText(item.text || '');
+    setNLink(item.link || '');
+    setNImageUrl(item.imageUrl || '');
+    setNMediaType(item.mediaType || 'image');
+    setNType(item.type || 'notice');
+    setNDurationSec(item.durationSeconds.toString());
+    const mins = Math.floor(item.intervalSeconds / 60);
+    const secs = item.intervalSeconds % 60;
+    setNIntervalMin(mins.toString());
+    setNIntervalSec(secs.toString());
+  };
 
   // Handle direct file uploads for Notice Media
   const handleNoticeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +141,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          id: editingNoticeId, // Inclusion forces the API to Update instead of Create!
           text: nText, 
           intervalSeconds: totalSec > 0 ? totalSec : 60, 
           durationSeconds: parseInt(nDurationSec) || 10,
@@ -125,11 +153,7 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setNText('');
-        setNLink('');
-        setNImageUrl('');
-        setNMediaType('image');
-        setNType('notice');
+        resetNoticeForm();
         fetchNotices();
       } else {
         alert("Server Error: " + (data.error || "Failed to add item"));
@@ -643,8 +667,16 @@ export default function AdminDashboard() {
                     disabled={savingNotice}
                     className="w-full py-3 bg-[#E60023] text-white rounded-lg font-bold text-sm hover:bg-[#C4001D] transition-colors shadow-md flex items-center justify-center leading-tight"
                  >
-                    {savingNotice ? '...' : '+ Create Item'}
+                    {savingNotice ? '...' : (editingNoticeId ? '💾 Update Notice' : '+ Create Item')}
                  </button>
+                 {editingNoticeId && (
+                    <button 
+                      onClick={resetNoticeForm}
+                      className="w-full mt-2 py-2 bg-gray-100 text-gray-600 rounded-lg font-semibold text-xs hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
               </div>
 
             </div>
@@ -673,9 +705,14 @@ export default function AdminDashboard() {
                        )}
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteNotice(item._id)} className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all ml-2 flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
+                  <div className="flex gap-1.5">
+                      <button onClick={() => handleEditNotice(item)} className="p-2 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all flex-shrink-0" title="Edit item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button onClick={() => handleDeleteNotice(item._id)} className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all flex-shrink-0" title="Delete item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                 </div>
               ))}
             </div>
