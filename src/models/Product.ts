@@ -5,6 +5,8 @@ export interface IProduct extends Document {
   price?: string;
   imageUrl: string;
   link: string;
+  description?: string;
+  aboutText?: string;
   createdAt: Date;
 }
 
@@ -24,6 +26,14 @@ const ProductSchema: Schema = new Schema({
   link: {
     type: String,
     required: [true, 'Please provide an affiliate link for the product'],
+  },
+  description: {
+    type: String,
+    required: false,
+  },
+  aboutText: {
+    type: String,
+    required: false,
   },
   createdAt: {
     type: Date,

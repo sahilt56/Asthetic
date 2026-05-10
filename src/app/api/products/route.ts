@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { title, price, link, imageBase64, password } = await req.json();
+    const { title, price, link, description, aboutText, imageBase64, password } = await req.json();
 
     if (!password || password !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -45,6 +45,8 @@ export async function POST(req: Request) {
       title,
       price,
       link,
+      description,
+      aboutText,
       imageUrl: uploadResponse.secure_url,
     });
 

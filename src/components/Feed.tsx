@@ -13,7 +13,9 @@ export default async function Feed() {
       title: p.title,
       price: p.price,
       imageUrl: p.imageUrl,
-      link: p.link
+      link: p.link,
+      description: p.description,
+      aboutText: p.aboutText
     }));
   } catch (error) {
     console.error("Failed to fetch products from DB:", error);
@@ -43,8 +45,8 @@ export default async function Feed() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+    <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 xl:gap-5 w-full items-stretch">
         {renderFeedItems()}
       </div>
     </div>
