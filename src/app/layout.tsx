@@ -56,6 +56,8 @@ export const metadata: Metadata = {
 
 import connectToDatabase from "@/lib/mongodb";
 import { Settings } from "@/models/Settings";
+import ComingSoonOverlay from "@/components/ComingSoonOverlay";
+import { cookies, headers } from 'next/headers';
 
 export default async function RootLayout({
   children,
@@ -63,14 +65,46 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let mascotUrl = '/kitty.gif';
+  let isComingSoon = false;
+  let comingSoonMessage = '';
+  let comingSoonDate = '';
+  let comingSoonTitle = '';
+  let easterEggMessage = '';
+  let easterEggImage = '';
+  let showActualContent = true;
+
   try {
+    const headerStore = await headers();
+    const cookieStore = await cookies();
+    const currentPath = headerStore.get('x-pathname') || '';
+    
     await connectToDatabase();
-    const setting = await Settings.findOne({ key: 'mascotImageUrl' }).lean();
-    if (setting && setting.value) {
-      mascotUrl = setting.value;
+    // Fetch configuration efficiently
+    const configKeys = ['mascotImageUrl', 'comingSoonEnabled', 'comingSoonMessage', 'comingSoonDate', 'comingSoonTitle', 'easterEggMessage', 'easterEggImage'];
+    const settingsArray = await Settings.find({ key: { $in: configKeys } }).lean();
+    
+    const settingsMap: Record<string, string> = {};
+    settingsArray.forEach((s: any) => { settingsMap[s.key] = s.value; });
+
+    if (settingsMap['mascotImageUrl']) mascotUrl = settingsMap['mascotImageUrl'];
+    isComingSoon = settingsMap['comingSoonEnabled'] === 'true';
+    comingSoonMessage = settingsMap['comingSoonMessage'] || '';
+    comingSoonDate = settingsMap['comingSoonDate'] || '';
+    comingSoonTitle = settingsMap['comingSoonTitle'] || '';
+    easterEggMessage = settingsMap['easterEggMessage'] || '';
+    easterEggImage = settingsMap['easterEggImage'] || '';
+
+    // 🛡️ SECURITY RULE: Check if we should completely remove page source from DOM!
+    const isAdminPage = currentPath.startsWith('/admin') || currentPath.startsWith('/api');
+    const hasBypassCookie = cookieStore.get('admin_preview_active')?.value === 'true';
+
+    // If it's coming soon, AND it's not an admin page, AND there is no bypass, kill content!
+    if (isComingSoon && !isAdminPage && !hasBypassCookie) {
+      showActualContent = false;
     }
+    
   } catch (e) {
-    console.error("Could not load mascot setting:", e);
+    console.error("Could not load site settings:", e);
   }
 
   const jsonLd = {
@@ -131,29 +165,63 @@ export default async function RootLayout({
         </div>
 
         {/* Aesthetic Walking Kitty mascot (Universal Version) */}
-        <div className="fixed bottom-0 left-0 w-full pointer-events-none z-[100] overflow-hidden h-24 md:h-32 select-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={mascotUrl} 
-            alt="walking mascot"
-            className="absolute bottom-[-22px] md:bottom-[-31px] h-24 md:h-32 w-auto object-contain animate-walk opacity-80 hover:opacity-100 transition-opacity pointer-events-none" 
-          />
-        </div>
+        {showActualContent && (
+          <div className="fixed bottom-0 left-0 w-full pointer-events-none z-[100] overflow-hidden h-24 md:h-32 select-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={mascotUrl} 
+              alt="walking mascot"
+              className="absolute bottom-[-22px] md:bottom-[-31px] h-24 md:h-32 w-auto object-contain animate-walk opacity-80 hover:opacity-100 transition-opacity pointer-events-none" 
+            />
+          </div>
+        )}
 
         {/* Floating Mobile Action Button (Moved Outside Header to bypass containment) */}
-        <Link 
-          href="https://in.pinterest.com/sahil620476" 
-          target="_blank"
-          rel="noopener noreferrer"
-          className="md:hidden fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-[#E60023] hover:bg-[#bd081c] text-white rounded-full flex items-center justify-center shadow-[0_6px_25px_rgba(230,0,35,0.5)] transition-all active:scale-90 border-2 border-white"
-          aria-label="Visit Pinterest"
-        >
-          <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.42 7.63 11.16-.1-.95-.19-2.41.04-3.45.21-.93 1.35-5.74 1.35-5.74s-.34-.69-.34-1.71c0-1.6 1.05-2.8 2.09-2.8.98 0 1.46.74 1.46 1.63 0 .99-.63 2.47-.96 3.84-.27 1.15.58 2.09 1.71 2.09 2.05 0 3.63-2.17 3.63-5.29 0-2.76-1.99-4.7-4.83-4.7-3.29 0-5.22 2.47-5.22 5.02 0 .99.38 2.06.86 2.64.09.11.11.21.08.33l-.32 1.3c-.05.21-.17.26-.39.16-1.46-.68-2.37-2.82-2.37-4.54 0-3.69 2.69-7.09 7.74-7.09 4.06 0 7.22 2.89 7.22 6.77 0 4.04-2.54 7.29-6.08 7.29-1.19 0-2.31-.62-2.69-1.35l-.73 2.79c-.26 1.02-.98 2.3-1.46 3.08C10.15 23.83 11.06 24 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/>
-          </svg>
-        </Link>
+        {showActualContent && (
+          <Link 
+            href="https://in.pinterest.com/sahil620476" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="md:hidden fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-[#E60023] hover:bg-[#bd081c] text-white rounded-full flex items-center justify-center shadow-[0_6px_25px_rgba(230,0,35,0.5)] transition-all active:scale-90 border-2 border-white"
+            aria-label="Visit Pinterest"
+          >
+            <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.42 7.63 11.16-.1-.95-.19-2.41.04-3.45.21-.93 1.35-5.74 1.35-5.74s-.34-.69-.34-1.71c0-1.6 1.05-2.8 2.09-2.8.98 0 1.46.74 1.46 1.63 0 .99-.63 2.47-.96 3.84-.27 1.15.58 2.09 1.71 2.09 2.05 0 3.63-2.17 3.63-5.29 0-2.76-1.99-4.7-4.83-4.7-3.29 0-5.22 2.47-5.22 5.02 0 .99.38 2.06.86 2.64.09.11.11.21.08.33l-.32 1.3c-.05.21-.17.26-.39.16-1.46-.68-2.37-2.82-2.37-4.54 0-3.69 2.69-7.09 7.74-7.09 4.06 0 7.22 2.89 7.22 6.77 0 4.04-2.54 7.29-6.08 7.29-1.19 0-2.31-.62-2.69-1.35l-.73 2.79c-.26 1.02-.98 2.3-1.46 3.08C10.15 23.83 11.06 24 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/>
+            </svg>
+          </Link>
+        )}
 
-        {children}
+        <ComingSoonOverlay 
+          isEnabled={isComingSoon}
+          title={comingSoonTitle}
+          message={comingSoonMessage}
+          targetDate={comingSoonDate}
+        />
+
+        {showActualContent ? children : (
+           <div className="fixed inset-0 flex items-center justify-center bg-[#FFF5F5] z-50 p-4 md:p-8 text-center overflow-y-auto">
+              <div className="w-full max-w-xl bg-white/70 backdrop-blur-md p-6 sm:p-10 rounded-[2rem] border border-[#FFE4E6] shadow-2xl flex flex-col items-center my-auto relative z-10">
+                 {easterEggImage ? (
+                   // eslint-disable-next-line @next/next/no-img-element
+                   <img 
+                      src={easterEggImage} 
+                      alt="Funny Easter Egg Meme" 
+                      className="w-full max-h-[400px] md:max-h-[720px] object-contain rounded-2xl mb-6 shadow-md border border-white"
+                   />
+                 ) : (
+                   <div className="text-5xl mb-4 animate-bounce">🕵️‍♂️</div>
+                 )}
+                 <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#3E322C] mb-3">Caught You Looking!</h2>
+                 <p className="text-sm font-medium text-[#8C7A74] leading-relaxed max-w-sm">
+                   {easterEggMessage || "Removing the overlay won't show the magic! Our source code is locked down tight on the server. 😜"}
+                 </p>
+                 <div className="mt-5 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#E60023] text-white text-[11px] font-bold uppercase tracking-widest rounded-full">
+                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zM10 2.943a10.954 10.954 0 01-7.329 2.729A10.956 10.956 0 002 7c0 4.382 2.82 8.142 6.75 9.512.217.075.44.137.667.186.227-.049.45-.111.667-.186C13.18 15.142 16 11.382 16 7c0-.443-.036-.876-.105-1.298a10.956 10.956 0 01-5.895-2.759zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+                   Server Side Encrypted
+                 </div>
+              </div>
+           </div>
+        )}
       </body>
     </html>
   );

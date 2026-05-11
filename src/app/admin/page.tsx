@@ -49,6 +49,15 @@ export default function AdminDashboard() {
   const [headerSubtitleColor, setHeaderSubtitleColor] = useState('');
   const [headerSubtitleFont, setHeaderSubtitleFont] = useState('font-sans');
 
+  // COMING SOON / MAINTENANCE MODE
+  const [comingSoonEnabled, setComingSoonEnabled] = useState(false);
+  const [comingSoonTitle, setComingSoonTitle] = useState('');
+  const [comingSoonMessage, setComingSoonMessage] = useState('');
+  const [comingSoonDate, setComingSoonDate] = useState('');
+  const [savingComingSoon, setSavingComingSoon] = useState(false);
+  const [easterEggMessage, setEasterEggMessage] = useState('');
+  const [easterEggImage, setEasterEggImage] = useState('');
+
   // MULTI-NOTICE MANAGEMENT SYSTEM
   const [notices, setNotices] = useState<any[]>([]);
   const [nText, setNText] = useState('');
@@ -193,6 +202,14 @@ export default function AdminDashboard() {
       setHeaderTitleFont(data.headerTitleFont || 'font-serif');
       setHeaderSubtitleColor(data.headerSubtitleColor || '');
       setHeaderSubtitleFont(data.headerSubtitleFont || 'font-sans');
+
+      // Coming Soon settings
+      setComingSoonEnabled(data.comingSoonEnabled === 'true');
+      setComingSoonTitle(data.comingSoonTitle || '');
+      setComingSoonMessage(data.comingSoonMessage || '');
+      setComingSoonDate(data.comingSoonDate || '');
+      setEasterEggMessage(data.easterEggMessage || '');
+      setEasterEggImage(data.easterEggImage || '');
     } catch (e) {
       console.error('Failed to load settings');
     }
@@ -268,6 +285,47 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveComingSoon = async () => {
+    setSavingComingSoon(true);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'comingSoonEnabled', value: comingSoonEnabled ? 'true' : 'false' })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'comingSoonMessage', value: comingSoonMessage })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'comingSoonTitle', value: comingSoonTitle })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'comingSoonDate', value: comingSoonDate })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'easterEggMessage', value: easterEggMessage })
+      });
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'easterEggImage', value: easterEggImage })
+      });
+      alert('Coming Soon settings updated successfully!');
+    } catch (e) {
+      alert('Failed to save Coming Soon settings.');
+    } finally {
+      setSavingComingSoon(false);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
@@ -300,6 +358,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) {
         setIsAuthenticated(true);
+        localStorage.setItem('admin_preview_active', 'true');
       } else {
         alert('Invalid password');
       }
@@ -448,13 +507,31 @@ export default function AdminDashboard() {
     );
   }
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_preview_active');
+    // Clear cookie too so server components re-lock the page
+    document.cookie = "admin_preview_active=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  };
+
   return (
     <div className="min-h-screen bg-muted/20 p-4 md:p-8">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
         
         <header className="flex justify-between items-center bg-background p-6 rounded-3xl shadow-sm border border-primary/20">
           <h1 className="font-serif text-2xl md:text-3xl text-foreground font-bold">Admin Dashboard ✨</h1>
-          <button onClick={() => setIsAuthenticated(false)} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 rounded-lg border border-transparent hover:border-muted">Logout</button>
+          <div className="flex items-center gap-3">
+            <a 
+              href="/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold bg-green-50 text-green-600 border border-green-200 px-4 py-2 rounded-xl hover:bg-green-100 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              Preview Live Site
+            </a>
+            <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 rounded-lg border border-transparent hover:border-muted">Logout</button>
+          </div>
         </header>
 
         {/* GLOBAL SETTINGS BAR */}
@@ -484,6 +561,106 @@ export default function AdminDashboard() {
             >
               {savingMascot ? 'Saving...' : 'Save Mascot'}
             </button>
+          </div>
+        </section>
+
+        {/* COMING SOON SETTINGS BAR */}
+        <section className="bg-[#FFF5F5] p-6 rounded-3xl shadow-sm border border-[#FFE4E6] flex flex-col gap-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#FFE4E6] pb-3">
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#3E322C] flex items-center gap-2">
+                🚀 Coming Soon / Overlay Control
+              </h3>
+              <p className="text-xs text-muted-foreground font-medium">Block the public frontend with a beautiful countdown timer overlay.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer scale-95">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={comingSoonEnabled} 
+                  onChange={(e) => setComingSoonEnabled(e.target.checked)} 
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E60023]"></div>
+                <span className="ml-3 text-sm font-bold text-[#3E322C]">
+                  {comingSoonEnabled ? '✅ ACTIVATED' : '❌ DEACTIVATED'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Main Heading</label>
+                <input 
+                  type="text" 
+                  placeholder="We will live soon"
+                  value={comingSoonTitle}
+                  onChange={(e) => setComingSoonTitle(e.target.value)}
+                  disabled={!comingSoonEnabled}
+                  className="px-4 py-2.5 rounded-xl bg-white border border-[#FFE4E6] focus:outline-none focus:ring-2 focus:ring-pink-200 text-sm disabled:opacity-50 font-bold"
+                />
+             </div>
+             <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Overlay Subtitle/Msg</label>
+                <input 
+                  type="text" 
+                  placeholder="We are preparing something truly magical just for you."
+                  value={comingSoonMessage}
+                  onChange={(e) => setComingSoonMessage(e.target.value)}
+                  disabled={!comingSoonEnabled}
+                  className="px-4 py-2.5 rounded-xl bg-white border border-[#FFE4E6] focus:outline-none focus:ring-2 focus:ring-pink-200 text-sm disabled:opacity-50"
+                />
+             </div>
+             <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Target Date & Time</label>
+                <input 
+                  type="datetime-local" 
+                  value={comingSoonDate}
+                  onChange={(e) => setComingSoonDate(e.target.value)}
+                  disabled={!comingSoonEnabled}
+                  className="px-4 py-2.5 rounded-xl bg-white border border-[#FFE4E6] focus:outline-none focus:ring-2 focus:ring-pink-200 text-sm disabled:opacity-50"
+                />
+             </div>
+          </div>
+
+          {/* Easter Egg Troll Row */}
+          <div className="mt-2 pt-4 border-t border-[#FFE4E6]/60 grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-red-700 uppercase flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                  Hidden Troll Text (For Inspect-Element users)
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Caught You Looking!..."
+                  value={easterEggMessage}
+                  onChange={(e) => setEasterEggMessage(e.target.value)}
+                  className="px-4 py-2 rounded-xl bg-red-50/30 border border-[#FFE4E6] focus:outline-none focus:ring-1 focus:ring-red-200 text-xs italic font-medium"
+                />
+             </div>
+             <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-red-700 uppercase flex items-center gap-1">
+                  🖼️ Hidden Meme Image URL
+                </label>
+                <input 
+                  type="url" 
+                  placeholder="Paste direct link to a funny GIF or image"
+                  value={easterEggImage}
+                  onChange={(e) => setEasterEggImage(e.target.value)}
+                  className="px-4 py-2 rounded-xl bg-red-50/30 border border-[#FFE4E6] focus:outline-none focus:ring-1 focus:ring-red-200 text-xs font-medium"
+                />
+             </div>
+          </div>
+
+          <div className="flex justify-end">
+             <button 
+               onClick={handleSaveComingSoon}
+               disabled={savingComingSoon}
+               className="px-6 py-2.5 bg-[#3E322C] hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all disabled:opacity-50"
+             >
+               {savingComingSoon ? 'Saving...' : 'Save Overlay Mode Settings'}
+             </button>
           </div>
         </section>
 
