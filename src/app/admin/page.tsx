@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 
 interface Product {
@@ -12,6 +12,17 @@ interface Product {
   description?: string;
   aboutText?: string;
   createdAt: string;
+}
+
+interface Notice {
+  _id: string;
+  text?: string;
+  intervalSeconds: number;
+  durationSeconds: number;
+  link?: string;
+  imageUrl?: string;
+  type: string;
+  mediaType?: string;
 }
 
 export default function AdminDashboard() {
@@ -59,7 +70,7 @@ export default function AdminDashboard() {
   const [easterEggImage, setEasterEggImage] = useState('');
 
   // MULTI-NOTICE MANAGEMENT SYSTEM
-  const [notices, setNotices] = useState<any[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [nText, setNText] = useState('');
   const [nIntervalMin, setNIntervalMin] = useState('0');
   const [nIntervalSec, setNIntervalSec] = useState('30');
@@ -84,7 +95,7 @@ export default function AdminDashboard() {
     setNDurationSec('10');
   };
 
-  const handleEditNotice = (item: any) => {
+  const handleEditNotice = (item: Notice) => {
     setEditingNoticeId(item._id);
     setNText(item.text || '');
     setNLink(item.link || '');
@@ -124,7 +135,7 @@ export default function AdminDashboard() {
           setNImageUrl(data.secure_url);
           setNMediaType(data.mediaType); // Sets 'image' or 'video' automatically!
         } else { alert("Upload failed."); }
-      } catch (err) { alert("Connection error."); }
+      } catch { alert("Connection error."); }
       setUploadingNoticeFile(false);
     };
     reader.readAsDataURL(file);
@@ -135,7 +146,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/notices', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) setNotices(data.data);
-    } catch (e) { console.error("Failed fetch notices"); }
+    } catch { console.error("Failed fetch notices"); }
   };
 
   const handleAddNotice = async () => {
@@ -167,7 +178,7 @@ export default function AdminDashboard() {
       } else {
         alert("Server Error: " + (data.error || "Failed to add item"));
       }
-    } catch (e) { 
+    } catch { 
       alert("Failed to connect to server"); 
     } finally {
       setSavingNotice(false);
@@ -183,7 +194,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ action: 'delete', id })
       });
       fetchNotices();
-    } catch (e) { alert("Failed deleting"); }
+    } catch { alert("Failed deleting"); }
   };
 
   const fetchSettings = async () => {
@@ -210,7 +221,7 @@ export default function AdminDashboard() {
       setComingSoonDate(data.comingSoonDate || '');
       setEasterEggMessage(data.easterEggMessage || '');
       setEasterEggImage(data.easterEggImage || '');
-    } catch (e) {
+    } catch {
       console.error('Failed to load settings');
     }
   };
@@ -257,7 +268,7 @@ export default function AdminDashboard() {
       }
 
       alert('Header settings updated successfully!');
-    } catch (e) {
+    } catch {
       alert('Error saving header settings.');
     } finally {
       setSavingHeader(false);
@@ -278,7 +289,7 @@ export default function AdminDashboard() {
       } else {
         alert('Failed to save mascot.');
       }
-    } catch (e) {
+    } catch {
       alert('Network error saving mascot.');
     } finally {
       setSavingMascot(false);
@@ -319,7 +330,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ key: 'easterEggImage', value: easterEggImage })
       });
       alert('Coming Soon settings updated successfully!');
-    } catch (e) {
+    } catch {
       alert('Failed to save Coming Soon settings.');
     } finally {
       setSavingComingSoon(false);
@@ -333,18 +344,12 @@ export default function AdminDashboard() {
       if (data.success) {
         setProducts(data.data);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch products');
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProducts();
-      fetchSettings();
-      fetchNotices();
-    }
-  }, [isAuthenticated]);
+  // Replaced useEffect with direct calls during login event to prevent cascading renders
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -359,10 +364,13 @@ export default function AdminDashboard() {
       if (data.success) {
         setIsAuthenticated(true);
         localStorage.setItem('admin_preview_active', 'true');
+        fetchProducts();
+        fetchSettings();
+        fetchNotices();
       } else {
         alert('Invalid password');
       }
-    } catch (error) {
+    } catch {
       alert('Login failed');
     }
     setLoading(false);
@@ -425,7 +433,15 @@ export default function AdminDashboard() {
       const url = isUpdating ? `/api/products/${editingId}` : '/api/products';
       const method = isUpdating ? 'PUT' : 'POST';
       
-      const payload: any = {
+      const payload: {
+        title: string;
+        price?: string;
+        link: string;
+        description?: string;
+        aboutText?: string;
+        password?: string;
+        imageBase64?: string;
+      } = {
         title,
         price,
         link,
@@ -452,7 +468,7 @@ export default function AdminDashboard() {
       } else {
         alert(data.error || 'Request failed');
       }
-    } catch (error) {
+    } catch {
       alert('Network error');
     }
     setSubmitting(false);
@@ -475,7 +491,7 @@ export default function AdminDashboard() {
       } else {
         alert(data.error || 'Failed to delete');
       }
-    } catch (error) {
+    } catch {
       alert('Network error');
     }
   };
@@ -581,7 +597,7 @@ export default function AdminDashboard() {
                   checked={comingSoonEnabled} 
                   onChange={(e) => setComingSoonEnabled(e.target.checked)} 
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E60023]"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E60023]"></div>
                 <span className="ml-3 text-sm font-bold text-[#3E322C]">
                   {comingSoonEnabled ? '✅ ACTIVATED' : '❌ DEACTIVATED'}
                 </span>
@@ -616,6 +632,7 @@ export default function AdminDashboard() {
                 <label className="text-[11px] font-bold text-[#8C7A74] uppercase">Target Date & Time</label>
                 <input 
                   type="datetime-local" 
+                  aria-label="Target Date and Time"
                   value={comingSoonDate}
                   onChange={(e) => setComingSoonDate(e.target.value)}
                   disabled={!comingSoonEnabled}
@@ -690,7 +707,7 @@ export default function AdminDashboard() {
                 value={headerTaglines}
                 onChange={(e) => setHeaderTaglines(e.target.value)}
                 placeholder="Line 1&#10;Line 2&#10;Line 3"
-                className="px-4 py-3 rounded-xl bg-muted/10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary text-sm min-h-[80px]"
+                className="px-4 py-3 rounded-xl bg-muted/10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary text-sm min-h-20"
               />
             </div>
           </div>
@@ -702,6 +719,7 @@ export default function AdminDashboard() {
                 Header Theme Look
               </label>
               <select 
+                aria-label="Header Theme Look"
                 value={headerTheme} 
                 onChange={(e) => setHeaderTheme(e.target.value)}
                 className="px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm font-medium focus:ring-2 focus:ring-pink-300 focus:outline-none"
@@ -719,6 +737,7 @@ export default function AdminDashboard() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <select 
+                    aria-label="Header Title Font"
                     value={headerTitleFont} 
                     onChange={(e) => setHeaderTitleFont(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm focus:ring-2 focus:ring-pink-300 focus:outline-none"
@@ -731,6 +750,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2 bg-muted/5 border border-muted rounded-xl px-2 py-1">
                    <input 
                      type="color" 
+                     aria-label="Header Title Color"
                      value={headerTitleColor || '#000000'} 
                      onChange={(e) => setHeaderTitleColor(e.target.value)} 
                      className="w-7 h-7 border-0 cursor-pointer bg-transparent"
@@ -745,6 +765,7 @@ export default function AdminDashboard() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <select 
+                    aria-label="Header Subtitle Font"
                     value={headerSubtitleFont} 
                     onChange={(e) => setHeaderSubtitleFont(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl bg-muted/5 border border-muted text-sm focus:ring-2 focus:ring-pink-300 focus:outline-none"
@@ -757,6 +778,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2 bg-muted/5 border border-muted rounded-xl px-2 py-1">
                    <input 
                      type="color" 
+                     aria-label="Header Subtitle Color"
                      value={headerSubtitleColor || '#6B7280'} 
                      onChange={(e) => setHeaderSubtitleColor(e.target.value)} 
                      className="w-7 h-7 border-0 cursor-pointer bg-transparent"
@@ -779,6 +801,7 @@ export default function AdminDashboard() {
               <div className="md:col-span-4">
                 <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Display Type</label>
                 <select 
+                  aria-label="Display Type"
                   value={nType}
                   onChange={(e) => setNType(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-[#E60023]/50 text-sm font-bold text-[#E60023]"
@@ -795,7 +818,7 @@ export default function AdminDashboard() {
                     value={nText}
                     onChange={(e) => setNText(e.target.value)}
                     placeholder="🔥 E.g., 50% Off Flash Sale!"
-                    className="w-full px-3 py-2.5 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-[#E60023]/50 text-sm min-h-[60px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-[#E60023]/50 text-sm min-h-15"
                   />
                 </div>
               )}
@@ -828,15 +851,15 @@ export default function AdminDashboard() {
                  <div className="grid grid-cols-3 gap-2 mb-2">
                     <div>
                       <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Interval M</label>
-                      <input type="number" min="0" value={nIntervalMin} onChange={(e) => setNIntervalMin(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                      <input type="number" aria-label="Interval Minutes" min="0" value={nIntervalMin} onChange={(e) => setNIntervalMin(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block">Interval S</label>
-                      <input type="number" min="0" max="59" value={nIntervalSec} onChange={(e) => setNIntervalSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                      <input type="number" aria-label="Interval Seconds" min="0" max="59" value={nIntervalSec} onChange={(e) => setNIntervalSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[#8C7A74] uppercase mb-1 block truncate">Dur (Sec)</label>
-                      <input type="number" min="1" value={nDurationSec} onChange={(e) => setNDurationSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
+                      <input type="number" aria-label="Duration Seconds" min="1" value={nDurationSec} onChange={(e) => setNDurationSec(e.target.value)} className="w-full px-2 py-2 rounded-lg border border-muted text-sm" />
                     </div>
                  </div>
                  <button 
@@ -859,13 +882,13 @@ export default function AdminDashboard() {
             </div>
 
             {/* LIST DISPLAY */}
-            <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="flex flex-col gap-2 max-h-50 overflow-y-auto custom-scrollbar pr-1">
               {notices.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-3 italic">No active dynamic notices yet.</p>
               ) : notices.map((item) => (
                 <div key={item._id} className="flex justify-between items-center bg-white px-3 py-2.5 rounded-xl border border-muted shadow-sm group">
                   <div className="flex flex-col gap-0.5 overflow-hidden">
-                    <p className={`font-bold text-sm truncate max-w-[250px] md:max-w-full ${item.text ? 'text-[#E60023]' : 'text-gray-400 italic'}`}>
+                    <p className={`font-bold text-sm truncate max-w-62.5 md:max-w-full ${item.text ? 'text-[#E60023]' : 'text-gray-400 italic'}`}>
                       {item.text || "🖼️ [Visual Media Only]"}
                     </p>
                     <div className="flex gap-2.5 text-[10px] font-bold text-[#8C7A74] items-center mt-0.5">
@@ -883,10 +906,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-1.5">
-                      <button onClick={() => handleEditNotice(item)} className="p-2 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all flex-shrink-0" title="Edit item">
+                      <button onClick={() => handleEditNotice(item)} className="p-2 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all shrink-0" title="Edit item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                       </button>
-                      <button onClick={() => handleDeleteNotice(item._id)} className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all flex-shrink-0" title="Delete item">
+                      <button onClick={() => handleDeleteNotice(item._id)} className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all shrink-0" title="Delete item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -931,7 +954,7 @@ export default function AdminDashboard() {
                 <label className="text-xs font-bold tracking-wide uppercase text-muted-foreground/80">
                   {editingId ? 'Update Product Image (Optional)' : 'Product Image'}
                 </label>
-                <div className="group border-2 border-dashed border-primary/20 hover:border-primary/40 bg-muted/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/30 transition-all relative overflow-hidden aspect-video sm:aspect-[1.5/1]">
+                <div className="group border-2 border-dashed border-primary/20 hover:border-primary/40 bg-muted/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/30 transition-all relative overflow-hidden aspect-video sm:aspect-1.5/1">
                   {previewUrl ? (
                     <div className="relative w-full h-full">
                       <Image src={previewUrl} alt="Preview" fill className="object-contain" />
@@ -949,6 +972,7 @@ export default function AdminDashboard() {
                   )}
                   <input 
                     type="file" 
+                    aria-label="Select Product Image File"
                     accept="image/*" 
                     onChange={handleImageChange}
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"

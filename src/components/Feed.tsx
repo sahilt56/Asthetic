@@ -1,14 +1,14 @@
 import ProductCard, { Product as ProductType } from "./ProductCard";
 import AdPlaceholder from "./AdPlaceholder";
 import connectToDatabase from '@/lib/mongodb';
-import { Product } from '@/models/Product';
+import { Product, IProduct } from '@/models/Product';
 
 export default async function Feed() {
   let dbProducts: ProductType[] = [];
   try {
     await connectToDatabase();
     const productsDoc = await Product.find({}).sort({ createdAt: -1 }).lean();
-    dbProducts = productsDoc.map((p: any) => ({
+    dbProducts = (productsDoc as unknown as IProduct[]).map((p) => ({
       id: p._id.toString(),
       title: p.title,
       price: p.price,
@@ -27,7 +27,7 @@ export default async function Feed() {
     let feedIndex = 0;
     
     if (dbProducts.length === 0) {
-       return <div className="col-span-full text-center py-12 text-muted-foreground col-span-2 md:col-span-3 lg:col-span-4">No products found. Add some from the Admin Panel!</div>
+       return <div className="col-span-full text-center py-12 text-muted-foreground">No products found. Add some from the Admin Panel!</div>
     }
 
     while (productIndex < dbProducts.length) {
@@ -45,7 +45,7 @@ export default async function Feed() {
   };
 
   return (
-    <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="w-full max-w-375 mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 xl:gap-5 w-full items-stretch">
         {renderFeedItems()}
       </div>

@@ -3,11 +3,41 @@ import { Settings } from '@/models/Settings';
 import { Notice } from '@/models/Notice';
 import DynamicHeaderContent from './DynamicHeaderContent';
 import Link from 'next/link';
+import mongoose from 'mongoose';
+
+interface SettingsDoc {
+  key: string;
+  value: string;
+}
+
+interface NoticeDoc {
+  _id: mongoose.Types.ObjectId;
+  text: string;
+  intervalSeconds: number;
+  durationSeconds: number;
+  link: string;
+  imageUrl: string;
+  mediaType: string;
+  type: 'notice' | 'billboard';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface NoticeItem {
+  id: string;
+  text: string;
+  intervalSeconds: number;
+  durationSeconds: number;
+  link?: string;
+  imageUrl?: string;
+  type?: 'notice' | 'billboard';
+  mediaType?: string;
+}
 
 export default async function Header() {
   let title = 'Aesthetic Finds ✨';
   let rawTaglines = 'Curated coquette treasures, cute decor, and premium finds, just for you.';
-  let notices: any[] = [];
+  let notices: NoticeItem[] = [];
   let headerTheme = 'glass';
   let headerTitleColor = '';
   let headerTitleFont = 'font-serif';
@@ -28,7 +58,7 @@ export default async function Header() {
       ] }
     }).lean();
     
-    const settingsMap = settings.reduce((acc: any, s: any) => {
+    const settingsMap = settings.reduce((acc: Record<string, string>, s: SettingsDoc) => {
       acc[s.key] = s.value;
       return acc;
     }, {});
@@ -45,15 +75,15 @@ export default async function Header() {
 
     // Fetch Advanced Notices
     const dbNotices = await Notice.find({}).lean();
-    notices = dbNotices.map((n: any) => ({
+    notices = dbNotices.map((n: NoticeDoc) => ({
       id: n._id.toString(),
       text: n.text,
       intervalSeconds: n.intervalSeconds,
       durationSeconds: n.durationSeconds,
-      link: n.link || '',
-      imageUrl: n.imageUrl || '',
-      type: n.type || 'notice',
-      mediaType: n.mediaType || 'image'
+      link: n.link || undefined,
+      imageUrl: n.imageUrl || undefined,
+      type: n.type,
+      mediaType: n.mediaType
     }));
   } catch (e) {
     console.error("Failed fetching Header settings/notices", e);
@@ -74,9 +104,9 @@ export default async function Header() {
   const phrases = rawTaglines.split('\n').map(p => p.trim()).filter(p => p.length > 0);
 
     return (
-      <header className={`w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between sticky top-0 z-50 gap-4 relative transition-all duration-500 ${currentThemeClass}`}>
+      <header className={`w-full py-4 md:py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between sticky top-0 z-50 gap-4 transition-all duration-500 ${currentThemeClass}`}>
         {/* Spacer for desktop centering of title */}
-        <div className="hidden md:block w-[200px]"></div>
+        <div className="hidden md:block w-50"></div>
         
         <DynamicHeaderContent 
           title={title}

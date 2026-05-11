@@ -7,7 +7,7 @@ export default function Footer() {
         <p className="font-sans text-xs md:text-sm text-white text-center font-medium">
           © {new Date().getFullYear()} Aesthetic Finds. All rights reserved.
         </p>
-        <div className="flex items-center gap-2 mt-[-4px] mb-2">
+        <div className="flex items-center gap-2 -mt-1 mb-2">
           <span className="text-[11px] text-white font-sans">Official Site of</span>
           <Link 
             href="https://in.pinterest.com/sahil620476" // Replace 'contenthub' with your exact username if different

@@ -10,7 +10,7 @@ export default function ContactUs() {
         <h1 className="font-serif text-3xl md:text-4xl text-primary-foreground mb-4">Contact Us</h1>
         
         <p className="text-muted-foreground font-sans text-sm mb-10">
-          We'd love to hear from you!
+          We would love to hear from you!
         </p>
 
         <section className="mb-10 font-sans text-primary-foreground">

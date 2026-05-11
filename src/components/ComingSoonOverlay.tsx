@@ -1,7 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
+
+const emptySubscribe = () => () => {};
+const getIsMounted = () => true;
+const getServerSnapshot = () => false;
+
+const subscribeStorage = (callback: () => void) => {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+};
+
+const getIsBypassed = () => {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('admin_preview_active') === 'true';
+};
 
 interface Props {
   isEnabled: boolean;
@@ -10,23 +24,28 @@ interface Props {
   targetDate: string;
 }
 
+const TimeUnit = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex flex-col items-center justify-center bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl p-3 sm:p-5 w-20 sm:w-24 shadow-[0_8px_30px_rgba(0,0,0,0.04)] group transition-transform hover:-translate-y-1">
+    <span className="text-3xl sm:text-4xl font-bold font-serif text-[#3E322C]">
+      {String(value).padStart(2, '0')}
+    </span>
+    <span className="text-[10px] sm:text-[12px] uppercase tracking-widest font-bold text-[#8C7A74] mt-1 group-hover:text-[#E60023] transition-colors">
+      {label}
+    </span>
+  </div>
+);
+
 export default function ComingSoonOverlay({ isEnabled, title, message, targetDate }: Props) {
   const pathname = usePathname();
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isBypassed, setIsBypassed] = useState(false);
+  
+  const isMounted = useSyncExternalStore(emptySubscribe, getIsMounted, getServerSnapshot);
+  const isBypassed = useSyncExternalStore(subscribeStorage, getIsBypassed, getServerSnapshot);
   
   // Don't block admin pages
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api');
 
   useEffect(() => {
-    setIsMounted(true);
-    // Safely access localStorage on mount
-    if (typeof window !== 'undefined') {
-      const bypass = localStorage.getItem('admin_preview_active') === 'true';
-      setIsBypassed(bypass);
-    }
-
     if (!isEnabled || isAdmin || !targetDate) return;
 
     const calculateTime = () => {
@@ -56,23 +75,12 @@ export default function ComingSoonOverlay({ isEnabled, title, message, targetDat
   // If it's disabled, admin is viewing, OR bypass flag is set in local storage, show nothing
   if (!isEnabled || isAdmin || isBypassed) return null;
 
-  const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center justify-center bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl p-3 sm:p-5 w-20 sm:w-24 shadow-[0_8px_30px_rgba(0,0,0,0.04)] group transition-transform hover:-translate-y-1">
-      <span className="text-3xl sm:text-4xl font-bold font-serif text-[#3E322C]">
-        {String(value).padStart(2, '0')}
-      </span>
-      <span className="text-[10px] sm:text-[12px] uppercase tracking-widest font-bold text-[#8C7A74] mt-1 group-hover:text-[#E60023] transition-colors">
-        {label}
-      </span>
-    </div>
-  );
-
   return (
-    <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#FFF5F5] overflow-hidden">
+    <div className="fixed inset-0 z-99999 flex flex-col items-center justify-center bg-[#FFF5F5] overflow-hidden">
       {/* Animated Aesthetic Background Background Elements mirroring the main site */}
       <div className="absolute inset-0 pointer-events-none z-0">
-         <div className="absolute top-[-10%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#FFE4E6] blur-[100px] opacity-70 animate-pulse" style={{animationDuration: '8s'}} />
-         <div className="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#EDE9FE] blur-[120px] opacity-60 animate-pulse" style={{animationDuration: '10s'}} />
+         <div className="absolute top-[-10%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#FFE4E6] blur-[100px] opacity-70 animate-pulse pulse-slow-8" />
+         <div className="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#EDE9FE] blur-[120px] opacity-60 animate-pulse pulse-slow-10" />
          <div className="absolute top-[30%] left-[30%] w-[40vw] h-[40vw] rounded-full bg-[#FFEDD5] blur-[120px] opacity-50" />
       </div>
 
@@ -115,6 +123,12 @@ export default function ComingSoonOverlay({ isEnabled, title, message, targetDat
         }
         .animate-bounce-slow {
           animation: bounce-slow 4s ease-in-out infinite;
+        }
+        .pulse-slow-8 {
+          animation-duration: 8s;
+        }
+        .pulse-slow-10 {
+          animation-duration: 10s;
         }
       `}</style>
     </div>

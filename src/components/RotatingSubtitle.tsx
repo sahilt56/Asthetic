@@ -70,12 +70,12 @@ export default function RotatingSubtitle({
 
   // If nothing exists, return empty spacing
   if (phrases.length === 0 && !specialNotice) {
-    return <div className="h-[20px] mt-1 md:mt-1.5"></div>;
+    return <div className="h-5 mt-1 md:mt-1.5"></div>;
   }
 
   // Render Block
   return (
-    <div className="h-[20px] mt-1 md:mt-1.5 flex justify-center items-center overflow-hidden relative min-w-[200px]">
+    <div className="h-5 mt-1 md:mt-1.5 flex justify-center items-center overflow-hidden relative min-w-50">
       <p 
         className={`font-sans text-[11px] sm:text-md md:text-sm transition-all duration-300 ease-out transform text-center max-w-full ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'

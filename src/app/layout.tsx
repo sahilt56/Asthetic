@@ -81,10 +81,10 @@ export default async function RootLayout({
     await connectToDatabase();
     // Fetch configuration efficiently
     const configKeys = ['mascotImageUrl', 'comingSoonEnabled', 'comingSoonMessage', 'comingSoonDate', 'comingSoonTitle', 'easterEggMessage', 'easterEggImage'];
-    const settingsArray = await Settings.find({ key: { $in: configKeys } }).lean();
+    const settingsArray = await Settings.find({ key: { $in: configKeys } }).lean() as unknown as Array<{ key: string, value: string }>;
     
     const settingsMap: Record<string, string> = {};
-    settingsArray.forEach((s: any) => { settingsMap[s.key] = s.value; });
+    settingsArray.forEach((s) => { settingsMap[s.key] = s.value; });
 
     if (settingsMap['mascotImageUrl']) mascotUrl = settingsMap['mascotImageUrl'];
     isComingSoon = settingsMap['comingSoonEnabled'] === 'true';
@@ -166,12 +166,12 @@ export default async function RootLayout({
 
         {/* Aesthetic Walking Kitty mascot (Universal Version) */}
         {showActualContent && (
-          <div className="fixed bottom-0 left-0 w-full pointer-events-none z-[100] overflow-hidden h-24 md:h-32 select-none">
+          <div className="fixed bottom-0 left-0 w-full pointer-events-none z-100 overflow-hidden h-24 md:h-32 select-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={mascotUrl} 
               alt="walking mascot"
-              className="absolute bottom-[-22px] md:bottom-[-31px] h-24 md:h-32 w-auto object-contain animate-walk opacity-80 hover:opacity-100 transition-opacity pointer-events-none" 
+              className="absolute -bottom-5.5 md:-bottom-7.75 h-24 md:h-32 w-auto object-contain animate-walk opacity-80 hover:opacity-100 transition-opacity pointer-events-none" 
             />
           </div>
         )}
@@ -182,7 +182,7 @@ export default async function RootLayout({
             href="https://in.pinterest.com/sahil620476" 
             target="_blank"
             rel="noopener noreferrer"
-            className="md:hidden fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-[#E60023] hover:bg-[#bd081c] text-white rounded-full flex items-center justify-center shadow-[0_6px_25px_rgba(230,0,35,0.5)] transition-all active:scale-90 border-2 border-white"
+            className="md:hidden fixed bottom-6 right-6 z-9999 w-14 h-14 bg-[#E60023] hover:bg-[#bd081c] text-white rounded-full flex items-center justify-center shadow-[0_6px_25px_rgba(230,0,35,0.5)] transition-all active:scale-90 border-2 border-white"
             aria-label="Visit Pinterest"
           >
             <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
@@ -200,13 +200,13 @@ export default async function RootLayout({
 
         {showActualContent ? children : (
            <div className="fixed inset-0 flex items-center justify-center bg-[#FFF5F5] z-50 p-4 md:p-8 text-center overflow-y-auto">
-              <div className="w-full max-w-xl bg-white/70 backdrop-blur-md p-6 sm:p-10 rounded-[2rem] border border-[#FFE4E6] shadow-2xl flex flex-col items-center my-auto relative z-10">
+              <div className="w-full max-w-xl bg-white/70 backdrop-blur-md p-6 sm:p-10 rounded-4xl border border-[#FFE4E6] shadow-2xl flex flex-col items-center my-auto relative z-10">
                  {easterEggImage ? (
                    // eslint-disable-next-line @next/next/no-img-element
                    <img 
                       src={easterEggImage} 
                       alt="Funny Easter Egg Meme" 
-                      className="w-full max-h-[400px] md:max-h-[720px] object-contain rounded-2xl mb-6 shadow-md border border-white"
+                      className="w-full max-h-100 md:max-h-180 object-contain rounded-2xl mb-6 shadow-md border border-white"
                    />
                  ) : (
                    <div className="text-5xl mb-4 animate-bounce">🕵️‍♂️</div>

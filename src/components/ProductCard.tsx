@@ -24,16 +24,16 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto [perspective:2000px] font-sans h-full">
-      <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] [will-change:transform] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
+    <div className="w-full max-w-3xl mx-auto perspective-[2000px] font-sans h-full">
+      <div className={`relative w-full h-full transition-all duration-500 transform-3d will-change-transform ${isFlipped ? 'transform-[rotateY(180deg)]' : ''}`}>
         
         {/* ==================== FRONT OF CARD ==================== */}
-        <div className={`group [backface-visibility:hidden] relative flex flex-col sm:flex-row bg-[#FFFBF9] rounded-[2rem] sm:rounded-[2.5rem] p-3 sm:p-5 md:p-6 shadow-sm sm:shadow-[0_12px_30px_-15px_rgba(222,155,155,0.15)] border border-[#FEF2F2] gap-3 sm:gap-6 md:gap-8 transition-shadow duration-300 w-full overflow-hidden ${isFlipped ? 'pointer-events-none' : 'z-10'}`}>
+        <div className={`group backface-hidden relative flex flex-col sm:flex-row bg-[#FFFBF9] rounded-4xl sm:rounded-[2.5rem] p-3 sm:p-5 md:p-6 shadow-sm sm:shadow-[0_12px_30px_-15px_rgba(222,155,155,0.15)] border border-[#FEF2F2] gap-3 sm:gap-6 md:gap-8 transition-shadow duration-300 w-full overflow-hidden ${isFlipped ? 'pointer-events-none' : 'z-10'}`}>
           {/* Gradient Background Accent Subtle */}
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#FFF5F5] opacity-40 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-transparent to-[#FFF5F5] opacity-40 pointer-events-none" />
 
           {/* LEFT SECTION: Clean Image Container */}
-          <div className="relative w-full sm:w-[40%] md:w-[42%] aspect-square sm:aspect-[3.8/5] md:aspect-[4/5] rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shrink-0 bg-[#F5EEEC] shadow-[0_6px_15px_-5px_rgba(0,0,0,0.05)] z-10">
+          <div className="relative w-full sm:w-[40%] md:w-[42%] aspect-square sm:aspect-[3.8/5] md:aspect-4/5 rounded-3xl sm:rounded-4xl overflow-hidden shrink-0 bg-[#F5EEEC] shadow-[0_6px_15px_-5px_rgba(0,0,0,0.05)] z-10">
             <Image
               src={product.imageUrl}
               alt={product.title}
@@ -43,7 +43,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
               sizes="(max-width: 640px) 100vw, 40vw"
             />
             {/* Gentle shadow overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-20 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/10 via-transparent to-transparent opacity-20 pointer-events-none" />
           </div>
 
           {/* RIGHT SECTION: Content Details */}
@@ -118,7 +118,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
         </div>
 
         {/* ==================== BACK OF CARD ==================== */}
-        <div className={`absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-[#FFFBF9] rounded-[2.5rem] p-5 sm:p-6 md:p-8 shadow-[0_20px_60px_-10px_rgba(222,155,155,0.25)] border border-[#FEF2F2] flex flex-col overflow-hidden ${!isFlipped ? 'pointer-events-none' : 'z-20'}`}>
+        <div className={`absolute inset-0 backface-hidden transform-[rotateY(180deg)] bg-[#FFFBF9] rounded-[2.5rem] p-5 sm:p-6 md:p-8 shadow-[0_20px_60px_-10px_rgba(222,155,155,0.25)] border border-[#FEF2F2] flex flex-col overflow-hidden ${!isFlipped ? 'pointer-events-none' : 'z-20'}`}>
           {/* Decorative background element */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFF2F1] rounded-full blur-3xl opacity-60 pointer-events-none" />
           
