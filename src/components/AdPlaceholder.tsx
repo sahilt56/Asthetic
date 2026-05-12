@@ -10,7 +10,8 @@ export default function AdPlaceholder({ type }: AdPlaceholderProps) {
     return (
       <div className="w-full max-w-4xl mx-auto my-6 px-4">
         <div className={`${baseClasses} w-full h-12.5 md:h-22.5 rounded-2xl`}>
-          <span className={textClasses}>[Sponsor Space - 320x50 / 728x90]</span>
+          <span className={textClasses}>[Please fill the form and share your valuable feedback THANK YOU | Sponsor Space - 320x50 / 728x90]</span> 
+          {/* Sponsor Space - 320x50 / 728x90 */}
         </div>
       </div>
     );
@@ -19,7 +20,8 @@ export default function AdPlaceholder({ type }: AdPlaceholderProps) {
   if (type === 'in-feed') {
     return (
       <div className={`${baseClasses} w-full h-full min-h-62.5 rounded-3xl`}>
-        <span className={textClasses}>[In-Feed Sponsor Space]</span>
+        <span className={textClasses}>[Please fill the form and share your valuable feedback THANK YOU | In-Feed Sponsor Space]</span>
+        {/* In-Feed Sponsor Space */}
       </div>
     );
   }
@@ -27,7 +29,8 @@ export default function AdPlaceholder({ type }: AdPlaceholderProps) {
   if (type === 'sticky-bottom') {
     return (
       <div className={`${baseClasses} w-full max-w-[320px] h-12.5 mx-auto rounded-xl`}>
-        <span className={textClasses}>[Sticky Sponsor Space]</span>
+        <span className={textClasses}>[Please fill the form and share your valuable feedback THANK YOU | Sticky Sponsor Space]</span>
+        {/* Sticky Sponsor Space */}
       </div>
     );
   }
