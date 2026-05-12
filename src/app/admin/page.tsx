@@ -25,6 +25,16 @@ interface Notice {
   mediaType?: string;
 }
 
+interface Feedback {
+  _id: string;
+  name: string;
+  country: string;
+  email?: string;
+  rating?: number;
+  message: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -71,6 +81,7 @@ export default function AdminDashboard() {
 
   // MULTI-NOTICE MANAGEMENT SYSTEM
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [nText, setNText] = useState('');
   const [nIntervalMin, setNIntervalMin] = useState('0');
   const [nIntervalSec, setNIntervalSec] = useState('30');
@@ -195,6 +206,32 @@ export default function AdminDashboard() {
       });
       fetchNotices();
     } catch { alert("Failed deleting"); }
+  };
+
+  const fetchFeedbacks = async () => {
+    try {
+      // Re-use current password state for authentication
+      const res = await fetch(`/api/feedback?password=${encodeURIComponent(password)}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success) setFeedbacks(data.data);
+    } catch { console.error("Failed fetch feedbacks"); }
+  };
+
+  const handleDeleteFeedback = async (id: string) => {
+    if(!confirm("Delete this feedback entry permanently?")) return;
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchFeedbacks();
+      } else {
+        alert(data.error || "Failed to delete feedback");
+      }
+    } catch { alert("Failed deleting feedback"); }
   };
 
   const fetchSettings = async () => {
@@ -367,6 +404,16 @@ export default function AdminDashboard() {
         fetchProducts();
         fetchSettings();
         fetchNotices();
+        
+        // Delay slightly to ensure 'password' state is usable for subsequent calls or rely on closures
+        setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/feedback?password=${encodeURIComponent(password)}`, { cache: 'no-store' });
+            const feedData = await res.json();
+            if (feedData.success) setFeedbacks(feedData.data);
+          } catch(err) { console.error(err); }
+        }, 100);
+
       } else {
         alert('Invalid password');
       }
@@ -927,6 +974,76 @@ export default function AdminDashboard() {
               {savingHeader ? 'Updating Header...' : 'Save Header Configuration'}
             </button>
           </div>
+        </section>
+
+        {/* USER FEEDBACK LOGS */}
+        <section className="bg-[#F5F5FB] p-6 rounded-3xl shadow-sm border border-[#E0E0F0] flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-[#E0E0F0] pb-3">
+            <div>
+               <h3 className="font-serif text-xl font-bold text-[#2D2D42] flex items-center gap-2">
+                 💬 User Feedback Responses
+               </h3>
+               <p className="text-xs text-muted-foreground font-medium">Insights from users submitted via the Feedback form.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="bg-[#52527A] text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                {feedbacks.length} Total
+              </span>
+              <button 
+                onClick={fetchFeedbacks}
+                className="text-[#52527A] hover:text-[#36365A] bg-white p-1.5 rounded-lg border border-[#E0E0F0] transition-colors"
+                title="Refresh list"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              </button>
+            </div>
+          </div>
+
+          {feedbacks.length === 0 ? (
+            <div className="py-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#E0E0F0] text-slate-500 italic text-sm">
+              No feedback received yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
+              {feedbacks.map((fb) => (
+                <div key={fb._id} className="bg-white p-4 rounded-2xl border border-[#E0E0F0] shadow-sm relative flex flex-col">
+                  <button 
+                    onClick={() => handleDeleteFeedback(fb._id)}
+                    className="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Delete Feedback"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+
+                  <div className="flex items-start justify-between mb-2 pr-6">
+                     <div className="flex flex-col">
+                        <span className="font-bold text-sm text-slate-800 truncate max-w-[200px]">
+                          {fb.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium">
+                          <span className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded border border-pink-100">📍 {fb.country}</span>
+                          {fb.email && <span className="text-slate-500 italic">{fb.email}</span>}
+                        </div>
+                     </div>
+                     <div className="flex flex-col items-end">
+                        <div className="flex text-yellow-400 text-xs mb-0.5">
+                          {[...Array(fb.rating || 0)].map((_, i) => <span key={i}>★</span>)}
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-400">
+                          {new Date(fb.createdAt).toLocaleDateString()}
+                        </span>
+                     </div>
+                  </div>
+                  
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex-1 mt-1">
+                    <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap break-words font-medium leading-relaxed">
+                      "{fb.message}"
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">

@@ -25,6 +25,8 @@ export default function Footer() {
           <Link href="/privacy" className="hover:text-[#e59595] transition-colors">Privacy Policy</Link>
           <span className="hidden md:inline">•</span>
           <Link href="/terms" className="hover:text-[#e59595] transition-colors">Terms & Conditions</Link>
+          {/* <span className="hidden md:inline">•</span>
+          <Link href="/feedback" className="hover:text-[#e59595] transition-colors">Feedback</Link> */}
           <span className="hidden md:inline">•</span>
           <Link href="/contact" className="hover:text-[#e59595] transition-colors">Contact Us</Link>
           <span className="hidden md:inline">•</span>
